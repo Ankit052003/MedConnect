@@ -15,6 +15,13 @@ export const patientRegister = catchAsyncErrors(async(req, res, next)=>{
          dob,
          nic} = req.body;
 
+    console.log("Registration request received:", {firstName, lastName, email, phone, gender, dob, nic});
+
+    // Validate all required fields
+    if (!firstName || !lastName || !email || !phone || !password || !gender || !dob || !nic) {
+        return next(new ErrorHandler("Please provide all required fields.", 400));
+    }
+
     // Check if user already exists
     let user = await User.findOne({email});
     if(user){
@@ -33,23 +40,47 @@ export const patientRegister = catchAsyncErrors(async(req, res, next)=>{
         nic, 
         role: "Patient"
     });
+    
+    console.log("User created successfully:", user.email);
     generateToken(user,"User Registered Successfully",200,res );
 });
 
 export const login = catchAsyncErrors(async(req,res,next)=>{
-    const {email, password, role} = req.body;
-    if(!email || !password || !role){
+    const {email, password, confirmPassword, role} = req.body;
+    
+    console.log("Login attempt:", { email, password: typeof password, confirmPassword: typeof confirmPassword, role });
+    
+    if(!email || !password || !confirmPassword || !role){
         return next(new ErrorHandler("Please provide all details.", 400));
     }
+    
+    // Check if passwords match
+    if(password !== confirmPassword){
+        return next(new ErrorHandler("Passwords do not match.", 400));
+    }
+    
+    // Ensure password is a string
+    const passwordString = String(password);
+    console.log("Password converted to string:", typeof passwordString);
     
     const user = await User.findOne({email}).select("+password");
     if(!user){
         return next(new ErrorHandler("Invalid password or email.", 400));
     }
     
-    const isPasswordMatched = await user.comparePassword(password);
-    if(!isPasswordMatched){
-        return next(new ErrorHandler("Invalid Password or Email", 400));
+    console.log("User found:", user.email);
+    console.log("Stored password type:", typeof user.password);
+    
+    try {
+        const isPasswordMatched = await user.comparePassword(passwordString);
+        console.log("Password match result:", isPasswordMatched);
+        
+        if(!isPasswordMatched){
+            return next(new ErrorHandler("Invalid Password or Email", 400));
+        }
+    } catch (error) {
+        console.error("Password comparison error:", error);
+        return next(new ErrorHandler("Password comparison failed", 500));
     }
     
     if(role !== user.role){
@@ -132,9 +163,12 @@ export const logoutAdmin = catchAsyncErrors(async(req, res, next)=>{
 });
 
 export const logoutPatient = catchAsyncErrors(async(req, res, next)=>{
+    console.log("Patient logout called"); // Debug log
     res.status(200).cookie("patientToken", "", {
         httpOnly: true,
         expires: new Date(Date.now()),
+        sameSite: "none",
+        secure: false // Set to true in production with HTTPS
     }).json({
         success: true,
         message: "Patient Logged Out Successfully!"

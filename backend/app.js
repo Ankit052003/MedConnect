@@ -7,13 +7,13 @@ import { dbConnection } from './database/dbConnection.js';
 import messageRouter from './router/messageRouter.js';
 import { errorMiddleware } from './middlewares/errorMiddleware.js';
 import userRouter from "./router/userRouter.js"
-
+import appointmnetRouter from "./router/appointmnetRouter.js"
 
 const app = express();
 dotenv.config({ path: './config/config.env'});
 
 app.use(cors({
-    origin: [process.env.FRONTEND_URL, process.env.DASHBOARD_URL], 
+    origin: [process.env.FRONTEND_URL, process.env.DASHBOARD_URL, "http://localhost:5174", "http://localhost:5173"], 
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     credentials: true,
 }));
@@ -33,6 +33,8 @@ app.get('/', (req, res) => {
 
 app.use('/api/v1/message', messageRouter);
 app.use('/api/v1/user', userRouter);
+app.use('/api/v1/appointment', appointmnetRouter);
+
 
 dbConnection();
 

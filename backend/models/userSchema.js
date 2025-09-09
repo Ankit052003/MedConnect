@@ -64,11 +64,28 @@ userSchema.pre("save", async function(next){
     if(!this.isModified("password")){
         next();
     }
-    this.password = await bcrypt.hash(this.password, 10);
+    // Ensure password is a string before hashing
+    this.password = await bcrypt.hash(String(this.password), 10);
 });
 
 userSchema.methods.comparePassword = async function(enteredPassword){
-    return await bcrypt.compare(enteredPassword, this.password);
+    try {
+        // Ensure both password and hash are strings
+        const passwordString = String(enteredPassword);
+        const hashString = String(this.password);
+        
+        console.log("Comparing password:", { 
+            enteredType: typeof enteredPassword, 
+            hashType: typeof this.password,
+            enteredLength: passwordString.length,
+            hashLength: hashString.length 
+        });
+        
+        return await bcrypt.compare(passwordString, hashString);
+    } catch (error) {
+        console.error("bcrypt.compare error:", error);
+        throw error;
+    }
 };
 
 userSchema.methods.generateJsonWebToken = function(){

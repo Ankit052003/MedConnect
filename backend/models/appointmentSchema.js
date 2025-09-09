@@ -39,29 +39,44 @@ const appointmentSchema = new mongoose.Schema({
         enum: ["Male", "Female"]
     },
     appointment_date:{
-        type: string,
+        type: String,
         required: true
     },
     department:{
-        type: string,
+        type: String,
         required: true
     },
     doctor:{
         firstName:{
-            type: string,
+            type: String,
             required: true
         },
         lastName:{
-            type: string,
+            type: String,
             required: true
         }
     },
     hasVisited:{
         type: Boolean,
-        required: true
+        default: false
     },
     doctorId:{
         type: mongoose.Schema.ObjectId,
         required: true
-    }
+    }, 
+    patientId:{
+         type: mongoose.Schema.ObjectId,
+        required: true
+    },
+    address:{
+        type: String,
+        required: true
+    },
+    status:{
+        type: String,
+        enum: ["Pending", "Accepted", "Rejected"],
+        default: "Pending",
+    },
 });
+
+export const Appointment = mongoose.model("Appointment", appointmentSchema)
